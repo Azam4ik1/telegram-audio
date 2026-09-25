@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
@@ -68,7 +70,7 @@ async def on_set_category(callback: CallbackQuery) -> None:
 
     expense = await db.get_expense(conn, expense_id, callback.from_user.id)
     await callback.message.edit_text(
-        f"✅ {category} · {parser.fmt(expense['amount'])} — {expense['note']}",
+        f"✅ {escape(category)} · {parser.fmt(expense['amount'])} — {escape(expense['note'])}",
         reply_markup=keyboards.entry_kb(expense_id),
     )
     await callback.answer("Категория изменена")

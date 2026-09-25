@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram import Router
 from aiogram.types import Message
 
@@ -31,6 +33,6 @@ async def handle_photo(message: Message) -> None:
 
     heard = result.get("heard")
     if heard:
-        await message.answer(f"🧾 Увидел: {heard}")
+        await message.answer(f"🧾 Увидел: {escape(heard)}")
 
     await save_and_reply(message, conn, items)

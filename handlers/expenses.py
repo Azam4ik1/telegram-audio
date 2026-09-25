@@ -1,4 +1,5 @@
 from datetime import datetime
+from html import escape
 from typing import List, Optional, Tuple
 
 from aiogram import F, Router
@@ -32,12 +33,15 @@ async def save_and_reply(message: Message, conn, items: List[Item]) -> None:
     if len(saved) == 1:
         expense_id, amount, note, resolved = saved[0]
         text = (
-            f"✅ {resolved} · {parser.fmt(amount)} — {note}\n"
+            f"✅ {escape(resolved)} · {parser.fmt(amount)} — {escape(note)}\n"
             f"Сегодня всего: {parser.fmt(total_today)}"
         )
         await message.answer(text, reply_markup=keyboards.entry_kb(expense_id))
     else:
-        lines = [f"{resolved} · {parser.fmt(amount)} — {note}" for _, amount, note, resolved in saved]
+        lines = [
+            f"{escape(resolved)} · {parser.fmt(amount)} — {escape(note)}"
+            for _, amount, note, resolved in saved
+        ]
         text = (
             f"✅ Записал {len(saved)} трат:\n" + "\n".join(lines) +
             f"\nСегодня всего: {parser.fmt(total_today)}"
@@ -71,7 +75,7 @@ async def _handle_pending(message: Message, conn, action: str, expense_id: int) 
 
     expense = await db.get_expense(conn, expense_id, user_id)
     await message.answer(
-        f"✅ {expense['category']} · {parser.fmt(expense['amount'])} — {expense['note']}",
+        f"✅ {escape(expense['category'])} · {parser.fmt(expense['amount'])} — {escape(expense['note'])}",
         reply_markup=keyboards.entry_kb(expense_id),
     )
 

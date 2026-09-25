@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram import Router
 from aiogram.types import Message
 
@@ -30,6 +32,6 @@ async def handle_voice(message: Message) -> None:
 
     heard = result.get("heard")
     if heard:
-        await message.answer(f"🎙 Услышал: {heard}")
+        await message.answer(f"🎙 Услышал: {escape(heard)}")
 
     await save_and_reply(message, conn, items)

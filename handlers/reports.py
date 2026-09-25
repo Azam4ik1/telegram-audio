@@ -1,6 +1,7 @@
 import csv
 import io
 from datetime import datetime, timedelta
+from html import escape
 from typing import Dict, List
 
 from aiogram import F, Router
@@ -29,7 +30,7 @@ def build_report(rows: List[Dict], title: str) -> str:
         percent = (amount / total * 100) if total else 0.0
         filled = round(percent / 10)
         bar = "▓" * filled + "░" * (10 - filled)
-        lines.append(f"{category} {parser.fmt(amount)} ({percent:.0f}%) {bar}")
+        lines.append(f"{escape(category)} {parser.fmt(amount)} ({percent:.0f}%) {bar}")
 
     return "\n".join(lines)
 
@@ -95,6 +96,6 @@ async def undo_last(message: Message) -> None:
 
     await db.delete_expense(conn, last["id"], user_id)
     await message.answer(
-        f"↩️ Удалил: {last['category']} · {parser.fmt(last['amount'])} — {last['note']}",
+        f"↩️ Удалил: {escape(last['category'])} · {parser.fmt(last['amount'])} — {escape(last['note'])}",
         reply_markup=keyboards.MAIN,
     )
