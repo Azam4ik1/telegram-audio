@@ -24,11 +24,16 @@ def _voice_prompt(categories: List[str]) -> str:
     category_list = ", ".join(categories)
     return (
         "Ты — парсер голосовых сообщений о расходах на русском/тоҷикӣ языке. "
-        "Раздели услышанное на отдельные траты. Для каждой определи сумму (число) "
+        "В сообщении может быть НЕСКОЛЬКО трат подряд — перечисли КАЖДУЮ из них "
+        "отдельным элементом массива items, ничего не пропускай и не объединяй разные траты в одну. "
+        "Для каждой определи сумму (только число, если сумма произнесена словами — переведи в цифры) "
         "и короткую заметку (1-3 слова). "
         f"Категория — одна из списка: {category_list}. Если ни одна не подходит — не указывай категорию. "
         "Ответь ТОЛЬКО JSON без пояснений в формате: "
-        '{"heard": "что услышал", "items": [{"amount": 50.0, "note": "такси", "category": "🚕 Транспорт"}]}'
+        '{"heard": "что услышал", "items": ['
+        '{"amount": 50, "note": "такси", "category": "🚕 Транспорт"}, '
+        '{"amount": 35, "note": "плов", "category": "🍔 Еда"}'
+        "]}"
     )
 
 
@@ -53,14 +58,17 @@ async def transcribe_voice(audio_bytes: bytes, categories: List[str]) -> Optiona
 
     items = []
     for item in data.get("items", []):
-        amount = item.get("amount")
         note = item.get("note")
         category = item.get("category")
-        if not isinstance(amount, (int, float)) or amount <= 0 or not note:
+        try:
+            amount = float(str(item.get("amount")).replace(",", "."))
+        except (TypeError, ValueError):
+            continue
+        if amount <= 0 or not note:
             continue
         if category not in categories:
             category = None
-        items.append({"amount": float(amount), "note": str(note).strip(), "category": category})
+        items.append({"amount": amount, "note": str(note).strip(), "category": category})
 
     if not items:
         return None
