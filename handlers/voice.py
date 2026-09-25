@@ -16,7 +16,12 @@ async def handle_voice(message: Message) -> None:
     audio = await message.bot.download_file(file.file_path)
     audio_bytes = audio.read()
 
-    result = await ai.transcribe_voice(audio_bytes, categories.CHOOSABLE_CATEGORIES)
+    try:
+        result = await ai.transcribe_voice(audio_bytes, categories.CHOOSABLE_CATEGORIES)
+    except ai.VoiceUnavailable:
+        await message.answer("Gemini сейчас перегружен 🙁 Подожди немного и попробуй снова.")
+        return
+
     if not result:
         await message.answer("Не разобрал голос 🙁 Повтори ещё раз или напиши текстом.")
         return

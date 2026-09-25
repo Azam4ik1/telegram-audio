@@ -4,6 +4,7 @@ import logging
 from typing import Dict, List, Optional
 
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 
 import config
@@ -12,8 +13,12 @@ logger = logging.getLogger(__name__)
 
 _client: Optional[genai.Client] = None
 
-VOICE_TIMEOUT_SECONDS = 15
+VOICE_TIMEOUT_SECONDS = 25
 CLASSIFY_TIMEOUT_SECONDS = 5
+
+
+class VoiceUnavailable(Exception):
+    """Gemini временно недоступен (перегрузка/503) — стоит повторить попытку."""
 
 
 def _get_client() -> genai.Client:
@@ -56,6 +61,9 @@ async def transcribe_voice(audio_bytes: bytes, categories: List[str]) -> Optiona
             timeout=VOICE_TIMEOUT_SECONDS,
         )
         data = json.loads(response.text)
+    except genai_errors.ServerError as e:
+        logger.warning("Gemini overloaded during transcribe_voice: %s", e)
+        raise VoiceUnavailable from e
     except Exception:
         logger.exception("transcribe_voice failed")
         return None
