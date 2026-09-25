@@ -1,11 +1,14 @@
 import asyncio
 import json
+import logging
 from typing import Dict, List, Optional
 
 from google import genai
 from google.genai import types
 
 import config
+
+logger = logging.getLogger(__name__)
 
 _client: Optional[genai.Client] = None
 
@@ -54,6 +57,7 @@ async def transcribe_voice(audio_bytes: bytes, categories: List[str]) -> Optiona
         )
         data = json.loads(response.text)
     except Exception:
+        logger.exception("transcribe_voice failed")
         return None
 
     items = []
@@ -96,6 +100,7 @@ async def classify_category(note: str, categories: List[str]) -> Optional[str]:
         )
         data = json.loads(response.text)
     except Exception:
+        logger.exception("classify_category failed")
         return None
 
     category = data.get("category")
