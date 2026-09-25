@@ -34,6 +34,14 @@ async def on_edit_amount(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
+@router.callback_query(F.data.startswith("note:"))
+async def on_edit_note(callback: CallbackQuery) -> None:
+    expense_id = int(callback.data.split(":", 1)[1])
+    callback.bot.pending[callback.from_user.id] = ("note", expense_id)
+    await callback.message.answer("Введи новый текст заметки")
+    await callback.answer()
+
+
 @router.callback_query(F.data.startswith("custom:"))
 async def on_custom_category(callback: CallbackQuery) -> None:
     expense_id = int(callback.data.split(":", 1)[1])

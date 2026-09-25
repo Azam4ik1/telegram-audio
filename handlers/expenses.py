@@ -56,6 +56,8 @@ async def _handle_pending(message: Message, conn, action: str, expense_id: int) 
             await message.answer("Не понял число. Напиши, например: 45")
             return
         updated = await db.update_expense_amount(conn, expense_id, user_id, amount)
+    elif action == "note":
+        updated = await db.update_expense_note(conn, expense_id, user_id, text)
     else:  # action == "category"
         category = text
         expense = await db.get_expense(conn, expense_id, user_id)

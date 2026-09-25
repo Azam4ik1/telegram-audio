@@ -92,6 +92,17 @@ async def update_expense_amount(
     return cursor.rowcount > 0
 
 
+async def update_expense_note(
+    conn: aiosqlite.Connection, expense_id: int, user_id: int, note: str
+) -> bool:
+    cursor = await conn.execute(
+        "UPDATE expenses SET note = ? WHERE id = ? AND user_id = ?",
+        (note, expense_id, user_id),
+    )
+    await conn.commit()
+    return cursor.rowcount > 0
+
+
 async def update_expense_category(
     conn: aiosqlite.Connection, expense_id: int, user_id: int, category: str
 ) -> bool:

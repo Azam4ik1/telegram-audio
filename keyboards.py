@@ -24,8 +24,11 @@ def entry_kb(expense_id: int) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(text="✏️ Категория", callback_data=f"cat:{expense_id}"),
                 InlineKeyboardButton(text="✏️ Сумма", callback_data=f"amt:{expense_id}"),
+            ],
+            [
+                InlineKeyboardButton(text="✏️ Заметка", callback_data=f"note:{expense_id}"),
                 InlineKeyboardButton(text="🗑 Удалить", callback_data=f"del:{expense_id}"),
-            ]
+            ],
         ]
     )
 
