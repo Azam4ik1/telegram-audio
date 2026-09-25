@@ -1,0 +1,13 @@
+[Unit]
+Description=Expense Telegram Bot
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/expense-bot
+EnvironmentFile=/opt/expense-bot/.env
+ExecStart=/opt/expense-bot/venv/bin/python bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
