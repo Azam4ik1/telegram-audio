@@ -23,6 +23,20 @@ def parse_line(line: str) -> Optional[Tuple[float, str]]:
     return amount, note
 
 
+def parse_amount(text: str) -> Optional[float]:
+    """"45" / "1.5к" -> число. Заметка не нужна — для редактирования суммы записи."""
+    match = NUMBER_RE.search(text)
+    if not match:
+        return None
+
+    raw_amount, suffix = match.groups()
+    amount = float(raw_amount.replace(",", "."))
+    if suffix and suffix.lower() in ("к", "k"):
+        amount *= 1000
+
+    return amount if amount > 0 else None
+
+
 def fmt(x: float) -> str:
     if float(x).is_integer():
         return f"{int(x):,}".replace(",", " ")

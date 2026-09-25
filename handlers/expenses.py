@@ -45,9 +45,45 @@ async def save_and_reply(message: Message, conn, items: List[Item]) -> None:
         await message.answer(text, reply_markup=keyboards.MAIN)
 
 
+async def _handle_pending(message: Message, conn, action: str, expense_id: int) -> None:
+    user_id = message.from_user.id
+    text = message.text.strip()
+
+    if action == "amount":
+        amount = parser.parse_amount(text)
+        if amount is None:
+            message.bot.pending[user_id] = (action, expense_id)
+            await message.answer("Не понял число. Напиши, например: 45")
+            return
+        updated = await db.update_expense_amount(conn, expense_id, user_id, amount)
+    else:  # action == "category"
+        category = text
+        expense = await db.get_expense(conn, expense_id, user_id)
+        if expense:
+            await db.set_alias(conn, user_id, expense["note"], category)
+        updated = await db.update_expense_category(conn, expense_id, user_id, category)
+
+    if not updated:
+        await message.answer("Не нашёл эту запись", reply_markup=keyboards.MAIN)
+        return
+
+    expense = await db.get_expense(conn, expense_id, user_id)
+    await message.answer(
+        f"✅ {expense['category']} · {parser.fmt(expense['amount'])} — {expense['note']}",
+        reply_markup=keyboards.entry_kb(expense_id),
+    )
+
+
 @router.message(F.text)
 async def handle_text(message: Message) -> None:
     conn = message.bot.db_conn
+
+    pending = message.bot.pending.pop(message.from_user.id, None)
+    if pending:
+        action, expense_id = pending
+        await _handle_pending(message, conn, action, expense_id)
+        return
+
     lines = message.text.strip().splitlines()
 
     items: List[Item] = []

@@ -23,6 +23,7 @@ def entry_kb(expense_id: int) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="✏️ Категория", callback_data=f"cat:{expense_id}"),
+                InlineKeyboardButton(text="✏️ Сумма", callback_data=f"amt:{expense_id}"),
                 InlineKeyboardButton(text="🗑 Удалить", callback_data=f"del:{expense_id}"),
             ]
         ]
@@ -34,4 +35,5 @@ def category_picker_kb(expense_id: int) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=name, callback_data=f"set:{expense_id}:{index}")]
         for index, name in enumerate(ALL_CATEGORIES)
     ]
+    rows.append([InlineKeyboardButton(text="➕ Своя категория", callback_data=f"custom:{expense_id}")])
     return InlineKeyboardMarkup(inline_keyboard=rows)

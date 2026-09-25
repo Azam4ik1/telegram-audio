@@ -26,12 +26,32 @@ async def on_pick_category(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
+@router.callback_query(F.data.startswith("amt:"))
+async def on_edit_amount(callback: CallbackQuery) -> None:
+    expense_id = int(callback.data.split(":", 1)[1])
+    callback.bot.pending[callback.from_user.id] = ("amount", expense_id)
+    await callback.message.answer("Введи новую сумму (например: 45 или 1.5к)")
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("custom:"))
+async def on_custom_category(callback: CallbackQuery) -> None:
+    expense_id = int(callback.data.split(":", 1)[1])
+    callback.bot.pending[callback.from_user.id] = ("category", expense_id)
+    await callback.message.answer("Напиши свою категорию (например: 🎁 Подарки) — запомню на будущее")
+    await callback.answer()
+
+
 @router.callback_query(F.data.startswith("set:"))
 async def on_set_category(callback: CallbackQuery) -> None:
     conn = callback.bot.db_conn
     _, expense_id_str, index_str = callback.data.split(":")
     expense_id = int(expense_id_str)
     category = keyboards.ALL_CATEGORIES[int(index_str)]
+
+    expense = await db.get_expense(conn, expense_id, callback.from_user.id)
+    if expense:
+        await db.set_alias(conn, callback.from_user.id, expense["note"], category)
 
     updated = await db.update_expense_category(conn, expense_id, callback.from_user.id, category)
     if not updated:
