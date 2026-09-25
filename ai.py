@@ -74,7 +74,9 @@ async def transcribe_voice(audio_bytes: bytes, categories: List[str]) -> Optiona
                     types.Part.from_bytes(data=audio_bytes, mime_type="audio/ogg"),
                     _voice_prompt(categories),
                 ],
-                config=types.GenerateContentConfig(response_mime_type="application/json"),
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json", temperature=0.0
+                ),
             ),
             timeout=VOICE_TIMEOUT_SECONDS,
         )
@@ -96,15 +98,19 @@ async def transcribe_voice(audio_bytes: bytes, categories: List[str]) -> Optiona
 def _receipt_prompt(categories: List[str]) -> str:
     category_list = ", ".join(categories)
     return (
-        "Ты читаешь фото чека из магазина/кафе. Если на чеке есть построчный список "
-        "покупок с ценами — перечисли КАЖДУЮ позицию отдельным элементом items. "
-        "Если построчной разбивки нет (только итоговая сумма) — верни один элемент "
-        "с этой итоговой суммой и названием магазина/заведения как заметкой. "
-        "Для каждой определи сумму (число) и короткую заметку (1-3 слова: название товара или магазина). "
+        "Ты читаешь фото ТОЛЬКО настоящего кассового/товарного чека покупки из магазина "
+        "или кафе — документа с названием продавца, списком позиций или итоговой суммой покупки. "
+        "Это НЕ чек, если на фото: купюра или монета, случайный предмет, документ без итога "
+        "покупки, скриншот, реклама. В таком случае verни "
+        '{"is_receipt": false, "heard": "", "items": []} и ничего не выдумывай. '
+        "Если это настоящий чек: is_receipt=true. Если на чеке построчный список покупок с "
+        "ценами — перечисли КАЖДУЮ позицию отдельным элементом items, не выдумывая цены, которых "
+        "нет на чеке. Если построчной разбивки нет (только итоговая сумма) — один элемент с этой "
+        "итоговой суммой и названием магазина как заметкой. "
+        "Для каждой позиции определи сумму (число, ровно как на чеке) и короткую заметку (1-3 слова). "
         f"Категория — одна из списка: {category_list}. Если ни одна не подходит — не указывай категорию. "
-        "Если это не похоже на чек — верни {\"heard\": \"\", \"items\": []}. "
         "Ответь ТОЛЬКО JSON без пояснений в формате: "
-        '{"heard": "название магазина и итог", "items": ['
+        '{"is_receipt": true, "heard": "название магазина и итог", "items": ['
         '{"amount": 25, "note": "хлеб", "category": "🍔 Еда"}'
         "]}"
     )
@@ -121,7 +127,9 @@ async def analyze_receipt(image_bytes: bytes, categories: List[str]) -> Optional
                     types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"),
                     _receipt_prompt(categories),
                 ],
-                config=types.GenerateContentConfig(response_mime_type="application/json"),
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json", temperature=0.0
+                ),
             ),
             timeout=PHOTO_TIMEOUT_SECONDS,
         )
@@ -131,6 +139,9 @@ async def analyze_receipt(image_bytes: bytes, categories: List[str]) -> Optional
         raise GeminiUnavailable from e
     except Exception:
         logger.exception("analyze_receipt failed")
+        return None
+
+    if not data.get("is_receipt"):
         return None
 
     items = _extract_items(data, categories)
@@ -154,7 +165,9 @@ async def classify_category(note: str, categories: List[str]) -> Optional[str]:
             client.aio.models.generate_content(
                 model=config.GEMINI_MODEL,
                 contents=prompt,
-                config=types.GenerateContentConfig(response_mime_type="application/json"),
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json", temperature=0.0
+                ),
             ),
             timeout=CLASSIFY_TIMEOUT_SECONDS,
         )
