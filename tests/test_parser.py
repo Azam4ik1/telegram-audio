@@ -36,6 +36,11 @@ def test_parse_line_no_note_returns_none():
     assert parse_line("50") is None
 
 
+def test_parse_line_strips_adjacent_punctuation():
+    assert parse_line("25-комунальный") == (25.0, "комунальный")
+    assert parse_line("25:такси") == (25.0, "такси")
+
+
 def test_detect_by_keywords_food():
     assert detect_by_keywords("плов") == "🍔 Еда"
 

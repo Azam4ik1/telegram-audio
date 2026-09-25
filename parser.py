@@ -15,7 +15,8 @@ def parse_line(line: str) -> Optional[Tuple[float, str]]:
     if suffix and suffix.lower() in ("к", "k"):
         amount *= 1000
 
-    note = " ".join((line[: match.start()] + line[match.end() :]).split())
+    remainder = line[: match.start()] + line[match.end() :]
+    note = " ".join(remainder.strip(" \t\n-:,./|").split())
     if not note or amount <= 0:
         return None
 
